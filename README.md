@@ -1,14 +1,14 @@
 ![logo](public/images/calzone-icon-128.png)
 # calZone
 
-## what is this?
+### what is this?
 a chrome extension for converting dates between timezones and creating calendar appointments.
 
-## why?
+### why?
 
 flying to america soon and it's a real pain to keep converting between PDT and AEST ...
 
-## Description!
+## description
 
 Highlight the appointment date. Change timezones. Create calendar appointment. 
 
