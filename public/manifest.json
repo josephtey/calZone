@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "React Chrome Extension",
+  "name": "CalZone",
   "version": "0.1",
-  "description": "Boilerplate manifest for React based Chrome Extension using Google's Manifest v3",
+  "description": "A simple solution to converting dates between timezones and creating calendar appointments.",
   "background": {
     "service_worker": "./background.js"
   },
@@ -13,10 +13,21 @@
     "tabs"
   ],
   "author": "Joseph Tey",
-  "homepage_url": "https://github.com/casendler/",
-  "short_name": "React Extension",
+  "short_name": "CalZone",
   "action": {
     "default_popup": "popup.html",
-    "default_title": "React Chrome Extension"
+    "default_title": "CalZone",
+    "default_icon": {
+      "16": "/images/calzone-icon-16.png",
+      "32": "/images/calzone-icon-32.png",
+      "48": "/images/calzone-icon-48.png",
+      "128": "/images/calzone-icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "/images/calzone-icon-16.png",
+    "32": "/images/calzone-icon-32.png",
+    "48": "/images/calzone-icon-48.png",
+    "128": "/images/calzone-icon-128.png"
   }
 }

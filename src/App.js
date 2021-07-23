@@ -7,12 +7,21 @@ import DateTimeRangePicker from '@wojtekmaj/react-datetimerange-picker';
 import TimezoneSelect from 'react-timezone-select'
 import timeZoneConverter from 'time-zone-converter'
 import AddToCalendarButton from './AddToCalendarButton'
-import { Input, Dropdown } from 'semantic-ui-react'
+import { Input, Button, Icon } from 'semantic-ui-react'
+import Logo from './calzone-icon.png'
 
 
 const Title = styled.div`
   text-align: center;
   margin-bottom: 20px;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  justify-content: center;
+`
+const LogoImg = styled.img`
+  width: 32px;
+  height: 32px;
 `
 const DateSection = styled.div`
   margin-bottom: 15px;
@@ -26,15 +35,16 @@ const Container = styled.div`
 `
 
 const TimezoneSelectWrapper = styled(TimezoneSelect)`
-  width: 300px;
+  width: 250px;
 `
 
 const DateTimeRangePickerWrapper = styled(DateTimeRangePicker)`
-  width: 400px;
+  width: 350px;
 `
 
 const CalendarSection = styled.div`
   display: flex;
+  flex-direction: column;
   gap: 15px;
   width: 100%;
 `
@@ -43,16 +53,65 @@ const SectionQuestion = styled.div`
   margin-bottom: 10px;
 `
 
-function App() {
+const CalendarHeader = styled.div`
+  display: flex;
+  margin-bottom: 20px;
+  align-items: center;
+  gap: 15px;
+`
+
+const AddToCalendarPage = ({
+  date,
+  onBack
+}) => {
+  const [eventName, setEventName] = useState("")
+  const [eventLocation, setEventLocation] = useState("")
+
+
+
+  return (
+    <Container>
+      <CalendarHeader>
+        <Button
+          onClick={onBack}
+          icon
+        >
+          <Icon name="chevron left" />
+        </Button>
+        <b>
+          {date[0].toUTCString()} - {date[1].toUTCString()}
+        </b>
+      </CalendarHeader>
+      <CalendarSection>
+        <Input style={{ flex: 1 }} placeholder='What?' value={eventName} onChange={(e) => {
+          setEventName(e.target.value)
+        }} />
+        <Input style={{ flex: 1 }} placeholder='Location?' value={eventLocation} onChange={e => {
+          setEventLocation(e.target.value)
+        }} />
+
+        <AddToCalendarButton
+          style={{ flex: 1 }}
+          event={{
+            title: eventName,
+            location: eventLocation,
+            startTime: date && date[0] ? date[0].toISOString() : '',
+            endTime: date && date[1] ? date[1].toISOString() : ''
+          }}
+          disabled={eventName !== "" && date && date[0] && date[1] ? false : true}
+        />
+      </CalendarSection>
+    </Container>
+  )
+}
+const App = () => {
+  const [screenMode, setScreenMode] = useState("main")
 
   const [date, setDate] = useState(null)
   const [timezone, setTimezone] = useState()
 
   const [convertedDate, setConvertedDate] = useState(null)
   const [convertedTimezone, setConvertedTimezone] = useState()
-
-  const [eventName, setEventName] = useState("")
-  const [eventLocation, setEventLocation] = useState("")
 
   const updateConvertedDate = (fromTimezone, toTimezone) => {
     setConvertedDate([date[0] ? new Date(timeZoneConverter(date[0], fromTimezone.offset, toTimezone.offset)) : null, date[1] ? new Date(timeZoneConverter(date[1], fromTimezone.offset, toTimezone.offset)) : null])
@@ -123,75 +182,91 @@ function App() {
 
   if (!timezone || !convertedTimezone) return null
 
-  return (
-    <Container>
-      <Title>
-        <h3>tmzne</h3>
-      </Title>
+  if (screenMode === "main") {
+    return (
+      <Container>
+        <Title>
+          <h3 style={{ margin: 0, padding: 0 }}>calzone</h3><LogoImg src={Logo} />
+        </Title>
 
-      <SectionQuestion>
-        <b>What date & time?</b> (or highlight text)
-      </SectionQuestion>
-      <DateSection>
-        <TimezoneSelectWrapper
-          value={timezone}
-          onChange={(newTimezone) => {
-            setTimezone(newTimezone)
-            chrome.storage.sync.set({ timezone1: newTimezone });
-          }}
-        />
-        <DateTimeRangePickerWrapper
-          onChange={(newDate) => {
-            setDate(newDate)
-          }}
-          value={date}
-        />
+        <SectionQuestion>
+          <b>What date & time?</b> (or highlight text)
+        </SectionQuestion>
+        <DateSection>
+          <Button
+            disabled={date && date[0] && date[1] ? false : true}
+            onClick={() => {
+              setScreenMode("calendar_original")
+            }}
+            icon
+          >
+            <Icon name="calendar" />
+          </Button>
+          <TimezoneSelectWrapper
+            value={timezone}
+            onChange={(newTimezone) => {
+              setTimezone(newTimezone)
+              chrome.storage.sync.set({ timezone1: newTimezone });
+            }}
+          />
+          <DateTimeRangePickerWrapper
+            onChange={(newDate) => {
+              setDate(newDate)
+            }}
+            value={date}
+          />
+        </DateSection>
 
-      </DateSection>
+        <SectionQuestion>
+          <b>What timezone do you want to convert to?</b>
+        </SectionQuestion>
+        <DateSection>
+          <Button
+            disabled={convertedDate && convertedDate[0] && convertedDate[1] ? false : true}
+            onClick={() => {
+              setScreenMode("calendar_converted")
+            }}
+            icon
+          >
+            <Icon name='calendar' />
+          </Button>
+          <TimezoneSelectWrapper
+            value={convertedTimezone}
+            onChange={(newConvertedTimezone) => {
+              setConvertedTimezone(newConvertedTimezone)
+              chrome.storage.sync.set({ timezone2: newConvertedTimezone });
+            }}
+          />
+          <DateTimeRangePickerWrapper
+            onChange={setConvertedDate}
+            value={convertedDate}
+            disabled={true}
+          />
 
-      <SectionQuestion>
-        <b>What timezone do you want to convert to?</b>
-      </SectionQuestion>
-      <DateSection>
-        <TimezoneSelectWrapper
-          value={convertedTimezone}
-          onChange={(newConvertedTimezone) => {
-            setConvertedTimezone(newConvertedTimezone)
-            chrome.storage.sync.set({ timezone2: newConvertedTimezone });
-          }}
-        />
-        <DateTimeRangePickerWrapper
-          onChange={setConvertedDate}
-          value={convertedDate}
-          disabled={true}
-        />
-      </DateSection>
+        </DateSection>
 
-      <SectionQuestion>
-        <b>Do you want to add this to your calendar?</b>
-      </SectionQuestion>
-      <CalendarSection>
-        <Input style={{ flex: 1 }} placeholder='What?' value={eventName} onChange={(e) => {
-          setEventName(e.target.value)
-        }} />
-        <Input style={{ flex: 1 }} placeholder='Location?' value={eventLocation} onChange={e => {
-          setEventLocation(e.target.value)
-        }} />
+      </Container>
+    );
+  } else if (screenMode === "calendar_original") {
+    return (
+      <AddToCalendarPage
+        date={date}
+        onBack={() => {
+          setScreenMode("main")
+        }}
+      />
+    )
+  } else if (screenMode === "calendar_converted") {
+    return (
+      <AddToCalendarPage
+        date={convertedDate}
+        onBack={() => {
+          setScreenMode("main")
+        }}
+      />
+    )
+  }
 
-        <AddToCalendarButton
-          style={{ flex: 1 }}
-          event={{
-            title: eventName,
-            location: eventLocation,
-            startTime: convertedDate && convertedDate[0] ? convertedDate[0].toISOString() : '',
-            endTime: convertedDate && convertedDate[1] ? convertedDate[1].toISOString() : ''
-          }}
-          disabled={eventName !== "" && convertedDate && convertedDate[0] && convertedDate[1] ? false : true}
-        />
-      </CalendarSection>
-
-    </Container>
-  );
 }
 
 export default App;
