@@ -18,9 +18,7 @@ const DateSection = styled.div`
 `
 
 const Container = styled.div`
-  width: 780px;
   padding: 30px;
-  height: 200px;
   background: white;
 `
 
@@ -35,17 +33,10 @@ const DateTimeRangePickerWrapper = styled(DateTimeRangePicker)`
 const CalendarSection = styled.div`
   display: flex;
   gap: 15px;
+  width: 100%;
 `
 
-const getSelectedText = () => {
-  const selection = window.getSelection().toString();
-  return selection
-
-}
-
 function App() {
-
-  const [initFlag, setInitFlag] = useState(false)
 
   const [date, setDate] = useState(null)
   const [timezone, setTimezone] = useState()
@@ -56,16 +47,22 @@ function App() {
   const [eventName, setEventName] = useState("")
   const [eventLocation, setEventLocation] = useState("")
 
-  const initFunc = async () => {
+  const updateConvertedDate = (fromTimezone, toTimezone) => {
+    setConvertedDate([date[0] ? new Date(timeZoneConverter(date[0], fromTimezone.offset, toTimezone.offset)) : null, date[1] ? new Date(timeZoneConverter(date[1], fromTimezone.offset, toTimezone.offset)) : null])
+  }
+
+  const getSelectedDateTime = async () => {
     let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
     const selection = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      function: getSelectedText,
+      function: () => {
+        const selection = window.getSelection().toString();
+        return selection
+      },
     });
 
     const parsedDate = chrono.parse(selection[0]['result'])
-
     setDate([parsedDate[0].start ? parsedDate[0].start.date() : null, parsedDate[0].end ? parsedDate[0].end.date() : null])
   }
 
@@ -100,42 +97,34 @@ function App() {
   }
 
   useEffect(() => {
+
+    // Get timezones from storage
     setTimezones()
+
+    // Get selected date time from DOM
+    getSelectedDateTime()
+
   }, [])
 
+  // Update converted date every time date, timezone or convertedTimezone changes
   useEffect(() => {
-    if (timezone && convertedTimezone && !initFlag) {
-      initFunc()
-
-      setInitFlag(true)
+    if (date && timezone && convertedTimezone) {
+      updateConvertedDate(timezone, convertedTimezone)
     }
-  }, [timezone, convertedTimezone])
+  }, [date, timezone, convertedTimezone])
 
-  // Update converted date
-  useEffect(() => {
-    if (date) {
-      setConvertedDate([date[0] ? new Date(timeZoneConverter(date[0], timezone.offset, convertedTimezone.offset)) : null, date[1] ? new Date(timeZoneConverter(date[1], timezone.offset, convertedTimezone.offset)) : null])
-    }
-  }, [date])
-
-  useEffect(() => {
-    if (convertedDate) {
-      console.log("converted date: ", convertedDate)
-    }
-  }, [convertedDate])
 
   if (!timezone || !convertedTimezone) return null
 
   return (
     <Container>
+      <h3>tmzne</h3>
       <DateSection>
         <TimezoneSelectWrapper
           value={timezone}
           onChange={(newTimezone) => {
             setTimezone(newTimezone)
             chrome.storage.sync.set({ timezone1: newTimezone });
-
-            setConvertedDate([date[0] ? new Date(timeZoneConverter(date[0], newTimezone.offset, convertedTimezone.offset)) : null, date[1] ? new Date(timeZoneConverter(date[1], newTimezone.offset, convertedTimezone.offset)) : null])
           }}
         />
         <DateTimeRangePickerWrapper
@@ -153,8 +142,6 @@ function App() {
           onChange={(newConvertedTimezone) => {
             setConvertedTimezone(newConvertedTimezone)
             chrome.storage.sync.set({ timezone2: newConvertedTimezone });
-
-            setConvertedDate([date[0] ? new Date(timeZoneConverter(date[0], timezone.offset, newConvertedTimezone.offset)) : null, date[1] ? new Date(timeZoneConverter(date[1], timezone.offset, newConvertedTimezone.offset)) : null])
           }}
         />
         <DateTimeRangePickerWrapper
@@ -165,14 +152,15 @@ function App() {
       </DateSection>
 
       <CalendarSection>
-        <Input placeholder='What?' value={eventName} onChange={(e) => {
+        <Input style={{ flex: 1 }} placeholder='What?' value={eventName} onChange={(e) => {
           setEventName(e.target.value)
         }} />
-        <Input placeholder='Location?' value={eventLocation} onChange={e => {
+        <Input style={{ flex: 1 }} placeholder='Location?' value={eventLocation} onChange={e => {
           setEventLocation(e.target.value)
         }} />
 
         <AddToCalendarButton
+          style={{ flex: 1 }}
           event={{
             title: eventName,
             location: eventLocation,
