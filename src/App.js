@@ -114,7 +114,7 @@ function App() {
   // Update converted date
   useEffect(() => {
     if (date) {
-      setConvertedDate([date[0] ? timeZoneConverter(date[0], timezone.offset, convertedTimezone.offset) : null, date[1] ? timeZoneConverter(date[1], timezone.offset, convertedTimezone.offset) : null])
+      setConvertedDate([date[0] ? new Date(timeZoneConverter(date[0], timezone.offset, convertedTimezone.offset)) : null, date[1] ? new Date(timeZoneConverter(date[1], timezone.offset, convertedTimezone.offset)) : null])
     }
   }, [date])
 
@@ -135,7 +135,7 @@ function App() {
             setTimezone(newTimezone)
             chrome.storage.sync.set({ timezone1: newTimezone });
 
-            setConvertedDate([date[0] ? timeZoneConverter(date[0], newTimezone.offset, convertedTimezone.offset) : null, date[1] ? timeZoneConverter(date[1], newTimezone.offset, convertedTimezone.offset) : null])
+            setConvertedDate([date[0] ? new Date(timeZoneConverter(date[0], newTimezone.offset, convertedTimezone.offset)) : null, date[1] ? new Date(timeZoneConverter(date[1], newTimezone.offset, convertedTimezone.offset)) : null])
           }}
         />
         <DateTimeRangePickerWrapper
@@ -154,7 +154,7 @@ function App() {
             setConvertedTimezone(newConvertedTimezone)
             chrome.storage.sync.set({ timezone2: newConvertedTimezone });
 
-            setConvertedDate([date[0] ? timeZoneConverter(date[0], timezone.offset, newConvertedTimezone.offset) : null, date[1] ? timeZoneConverter(date[1], timezone.offset, newConvertedTimezone.offset) : null])
+            setConvertedDate([date[0] ? new Date(timeZoneConverter(date[0], timezone.offset, newConvertedTimezone.offset)) : null, date[1] ? new Date(timeZoneConverter(date[1], timezone.offset, newConvertedTimezone.offset)) : null])
           }}
         />
         <DateTimeRangePickerWrapper
@@ -176,8 +176,8 @@ function App() {
           event={{
             title: eventName,
             location: eventLocation,
-            startTime: convertedDate && convertedDate[0] ? convertedDate[0] : '',
-            endTime: convertedDate && convertedDate[1] ? convertedDate[1] : ''
+            startTime: convertedDate && convertedDate[0] ? convertedDate[0].toISOString() : '',
+            endTime: convertedDate && convertedDate[1] ? convertedDate[1].toISOString() : ''
           }}
           disabled={eventName !== "" && convertedDate && convertedDate[0] && convertedDate[1] ? false : true}
         />
