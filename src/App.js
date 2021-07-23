@@ -7,10 +7,13 @@ import DateTimeRangePicker from '@wojtekmaj/react-datetimerange-picker';
 import TimezoneSelect from 'react-timezone-select'
 import timeZoneConverter from 'time-zone-converter'
 import AddToCalendarButton from './AddToCalendarButton'
-import { Input } from 'semantic-ui-react'
+import { Input, Dropdown } from 'semantic-ui-react'
 
 
-
+const Title = styled.div`
+  text-align: center;
+  margin-bottom: 20px;
+`
 const DateSection = styled.div`
   margin-bottom: 15px;
   display: flex;
@@ -34,6 +37,10 @@ const CalendarSection = styled.div`
   display: flex;
   gap: 15px;
   width: 100%;
+`
+
+const SectionQuestion = styled.div`
+  margin-bottom: 10px;
 `
 
 function App() {
@@ -118,7 +125,13 @@ function App() {
 
   return (
     <Container>
-      <h3>tmzne</h3>
+      <Title>
+        <h3>tmzne</h3>
+      </Title>
+
+      <SectionQuestion>
+        <b>What date & time?</b> (or highlight text)
+      </SectionQuestion>
       <DateSection>
         <TimezoneSelectWrapper
           value={timezone}
@@ -136,6 +149,9 @@ function App() {
 
       </DateSection>
 
+      <SectionQuestion>
+        <b>What timezone do you want to convert to?</b>
+      </SectionQuestion>
       <DateSection>
         <TimezoneSelectWrapper
           value={convertedTimezone}
@@ -151,6 +167,9 @@ function App() {
         />
       </DateSection>
 
+      <SectionQuestion>
+        <b>Do you want to add this to your calendar?</b>
+      </SectionQuestion>
       <CalendarSection>
         <Input style={{ flex: 1 }} placeholder='What?' value={eventName} onChange={(e) => {
           setEventName(e.target.value)
