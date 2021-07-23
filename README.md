@@ -1,1 +1,3 @@
+![logo](public/calzone-icon-128.png)
+
 flying to america soon and it's a real pain to keep converting between PDT and AEST ...
