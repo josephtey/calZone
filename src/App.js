@@ -5,26 +5,42 @@ import styled from 'styled-components'
 import * as chrono from 'chrono-node';
 import DateTimeRangePicker from '@wojtekmaj/react-datetimerange-picker';
 import TimezoneSelect from 'react-timezone-select'
+import timeZoneConverter from 'time-zone-converter'
+import AddToCalendarButton from './AddToCalendarButton'
+import { Input } from 'semantic-ui-react'
+
 
 
 const DateSection = styled.div`
   margin-bottom: 15px;
+  display: flex;
+  gap: 15px;
 `
 
 const Container = styled.div`
-  width: 380px;
+  width: 780px;
   padding: 30px;
+  height: 200px;
   background: white;
+`
+
+const TimezoneSelectWrapper = styled(TimezoneSelect)`
+  width: 300px;
+`
+
+const DateTimeRangePickerWrapper = styled(DateTimeRangePicker)`
+  width: 400px;
+`
+
+const CalendarSection = styled.div`
+  display: flex;
+  gap: 15px;
 `
 
 const getSelectedText = () => {
   const selection = window.getSelection().toString();
   return selection
 
-}
-
-const convertTZ = (date, tzString) => {
-  return new Date((typeof date === "string" ? new Date(date) : date).toLocaleString("en-US", { timeZone: tzString }));
 }
 
 function App() {
@@ -37,6 +53,9 @@ function App() {
   const [convertedDate, setConvertedDate] = useState(null)
   const [convertedTimezone, setConvertedTimezone] = useState()
 
+  const [eventName, setEventName] = useState("")
+  const [eventLocation, setEventLocation] = useState("")
+
   const initFunc = async () => {
     let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
@@ -46,17 +65,12 @@ function App() {
     });
 
     const parsedDate = chrono.parse(selection[0]['result'])
-    console.log(parsedDate)
 
     setDate([parsedDate[0].start ? parsedDate[0].start.date() : null, parsedDate[0].end ? parsedDate[0].end.date() : null])
-    console.log(timezone)
-    console.log(convertedTimezone)
-    setConvertedDate([parsedDate[0].start ? convertTZ(parsedDate[0].start.date(), convertedTimezone.value) : null, parsedDate[0].end ? convertTZ(parsedDate[0].end.date(), convertedTimezone.value) : null])
   }
 
   const setTimezones = () => {
     chrome.storage.sync.get("timezone1", data => {
-      console.log(data)
       if (data.timezone1) {
         setTimezone(data.timezone1)
       } else {
@@ -71,7 +85,6 @@ function App() {
     })
 
     chrome.storage.sync.get("timezone2", data => {
-      console.log(data)
       if (data.timezone2) {
         setConvertedTimezone(data.timezone2)
       } else {
@@ -98,26 +111,36 @@ function App() {
     }
   }, [timezone, convertedTimezone])
 
+  // Update converted date
+  useEffect(() => {
+    if (date) {
+      setConvertedDate([date[0] ? timeZoneConverter(date[0], timezone.offset, convertedTimezone.offset) : null, date[1] ? timeZoneConverter(date[1], timezone.offset, convertedTimezone.offset) : null])
+    }
+  }, [date])
+
+  useEffect(() => {
+    if (convertedDate) {
+      console.log("converted date: ", convertedDate)
+    }
+  }, [convertedDate])
+
   if (!timezone || !convertedTimezone) return null
 
   return (
     <Container>
       <DateSection>
-        <TimezoneSelect
+        <TimezoneSelectWrapper
           value={timezone}
           onChange={(newTimezone) => {
+            setTimezone(newTimezone)
+            chrome.storage.sync.set({ timezone1: newTimezone });
 
-            if (newTimezone !== timezone) {
-              setTimezone(newTimezone)
-              setConvertedDate([convertedDate[0] ? convertTZ(convertedDate[0], newTimezone.value) : null, convertedDate[1] ? convertTZ(convertedDate[1], newTimezone.value) : null])
-              chrome.storage.sync.set({ timezone1: newTimezone });
-            }
+            setConvertedDate([date[0] ? timeZoneConverter(date[0], newTimezone.offset, convertedTimezone.offset) : null, date[1] ? timeZoneConverter(date[1], newTimezone.offset, convertedTimezone.offset) : null])
           }}
         />
-        <DateTimeRangePicker
+        <DateTimeRangePickerWrapper
           onChange={(newDate) => {
             setDate(newDate)
-            setConvertedDate([newDate[0] ? convertTZ(newDate[0], convertedTimezone.value) : null, newDate[1] ? convertTZ(newDate[1], convertedTimezone.value) : null])
           }}
           value={date}
         />
@@ -125,22 +148,40 @@ function App() {
       </DateSection>
 
       <DateSection>
-        <TimezoneSelect
+        <TimezoneSelectWrapper
           value={convertedTimezone}
           onChange={(newConvertedTimezone) => {
-            if (newConvertedTimezone !== convertedTimezone) {
-              setConvertedTimezone(newConvertedTimezone)
-              setConvertedDate([convertedDate[0] ? convertTZ(convertedDate[0], newConvertedTimezone.value) : null, convertedDate[1] ? convertTZ(convertedDate[1], newConvertedTimezone.value) : null])
-              chrome.storage.sync.set({ timezone2: newConvertedTimezone });
-            }
+            setConvertedTimezone(newConvertedTimezone)
+            chrome.storage.sync.set({ timezone2: newConvertedTimezone });
+
+            setConvertedDate([date[0] ? timeZoneConverter(date[0], timezone.offset, newConvertedTimezone.offset) : null, date[1] ? timeZoneConverter(date[1], timezone.offset, newConvertedTimezone.offset) : null])
           }}
         />
-        <DateTimeRangePicker
+        <DateTimeRangePickerWrapper
           onChange={setConvertedDate}
           value={convertedDate}
           disabled={true}
         />
       </DateSection>
+
+      <CalendarSection>
+        <Input placeholder='What?' value={eventName} onChange={(e) => {
+          setEventName(e.target.value)
+        }} />
+        <Input placeholder='Location?' value={eventLocation} onChange={e => {
+          setEventLocation(e.target.value)
+        }} />
+
+        <AddToCalendarButton
+          event={{
+            title: eventName,
+            location: eventLocation,
+            startTime: convertedDate && convertedDate[0] ? convertedDate[0] : '',
+            endTime: convertedDate && convertedDate[1] ? convertedDate[1] : ''
+          }}
+          disabled={eventName !== "" && convertedDate && convertedDate[0] && convertedDate[1] ? false : true}
+        />
+      </CalendarSection>
 
     </Container>
   );
